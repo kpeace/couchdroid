@@ -16,6 +16,9 @@ limitations under the License.
 
 package census.couchdroid;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
 * The View is the mechanism for performing Querys on a CouchDB instance.
 * The view can be named or ad-hoc (see AdHocView). (Currently [14 Sept 2007] named view aren't working in the 
@@ -28,38 +31,72 @@ package census.couchdroid;
 *
 */
 public class CouchView {
- protected String key;
- protected String startKey;
- protected String endKey;
- protected Integer limit;
- protected Boolean update;
- protected Boolean reverse;
- protected String skip;
- protected Boolean group;
- protected Boolean includeDocs;
+    
+    public class QueryArguments{
+        public final static String KEY = "key";
+        public final static String STARTKEY = "startkey";
+        public final static String ENDKEY = "endkey";
+        public final static String LIMIT = "limit";
+        public final static String INCLUDEDOCS = "include_docs";
+        
+        private HashMap<String, String> query_arguments;
+        
+        QueryArguments(HashMap<String, String> new_query_arguments){
+            // TODO add argument validation checking
+            query_arguments = new HashMap<String, String>(new_query_arguments);
+        }
+        
+        String getQueryAguments(){
+            if (query_arguments.size() == 0){
+                return null;
+            }
+            
+            String query = new String();
+            
+            for (Map.Entry<String, String> entry : query_arguments.entrySet()){
+                // non numeric values must be surrounded by " (quotes).
+                String val = entry.getValue();
+                try{
+                    Integer.parseInt(val);
+                }
+                catch (NumberFormatException e){
+                    if (val != null){
+                        val = "\"" + val + "\"";
+                    }
+                }
+                
+                query += entry.getKey() + "=" + val + "&";
+            }
+            
+            return query.substring(0, query.length() - 1);
+        }
+    }
+    protected QueryArguments query_arguments = null;
  
- protected String name;
- protected CouchDocument document;
- protected String function;
+    protected String name;
+    protected CouchDocument document;
+    protected String function;
  
- /**
-  * Build a view given a document and a name
-  * 
-  * @param doc
-  * @param name
-  */
- public CouchView(CouchDocument doc, String name) {
-     this.document=doc;
-     this.name=name;
- }
+    /**
+     * Build a view given a document and a name
+     * 
+     * @param doc
+     * @param name
+     */
+    public CouchView(CouchDocument doc, String name) {
+        this.document=doc;
+        this.name=name;
+    }
  
  /**
   * Build a view given only a fullname ex: ("_add_docs", "_temp_view")
   * @param fullname
   */
- public CouchView(String fullname) {
+ public CouchView(String fullname, HashMap<String, String> query_args) {
      this.name=fullname;
      this.document=null;
+     
+     setQueryArguments(query_args);
  }
  
  /**
@@ -80,119 +117,22 @@ public class CouchView {
  }
  
  /**
+  * Accepts a Hash map of key = argument, value = argument_value
+  * these will be appended to the view as "?argument1=argument_value1&argument2=argument_value2"
+  */
+ public void setQueryArguments(HashMap<String, String> new_query_arguments){
+     query_arguments = new QueryArguments(new_query_arguments);
+ }
+ 
+ /**
   * Based upon settings, builds the queryString to add to the URL for this view.
-  * 
   * 
   * @return
   */
  public String getQueryString() {
-     String queryString = "";
-     if (key!=null) {
-         if (!queryString.equals("")) { queryString+="&"; }
-         queryString+="key="+key;
-     }
-     if (startKey!=null) {
-         if (!queryString.equals("")) { queryString+="&"; }
-         queryString+="startkey="+startKey;
-     }
-     if (endKey!=null) {
-         if (!queryString.equals("")) { queryString+="&"; }
-         queryString+="endkey="+endKey;
-     }
-     if (skip!=null) {
-         if (!queryString.equals("")) { queryString+="&"; }
-         queryString+="skip="+skip;
-     }
-     if (limit!=null) {
-         if (!queryString.equals("")) { queryString+="&"; }
-         queryString+="limit="+limit;
-     }
-     if (update!=null && update.booleanValue()) {
-         if (!queryString.equals("")) { queryString+="&"; }
-         queryString+="update=true";
-     }
-     if (includeDocs!=null && includeDocs.booleanValue()) {
-         if (!queryString.equals("")) { queryString+="&"; }
-         queryString+="include_docs=true";
-     }
-     if (reverse!=null && reverse.booleanValue()) {
-         if (!queryString.equals("")) { queryString+="&"; }
-                 queryString+="descending=true";
-     }
-     if (group!=null && group.booleanValue()) {
-         if (!queryString.equals("")) { queryString+="&"; }
-             queryString+="group=true";      
-     }
-     return queryString.equals("") ? null : queryString;
-                      
+     return (query_arguments == null ? null : query_arguments.getQueryAguments());
  }
  
- /**
-  * The number of entries to return
-  * @param count
-      * @deprecated CouchDB 0.9 uses limit instead
-  */
- public void setCount(Integer count) {
-     //this.count = count;
-     setLimit(count);
- }
-
-     public void setKey(String key) {
-       this.key = key;
-     }
-
-     public void setLimit(Integer limit) {
-       this.limit = limit;
-     }
-
-     public void setGroup(Boolean group) {
-       this.group = group;
-     }
-
- /**
-  * Stop listing at this key
-  * @param endKey
-  */
- public void setEndKey(String endKey) {
-     this.endKey = endKey;
- }
- /**
-  * Reverse the listing
-  * @param reverse
-  * @deprecated CouchDB 0.9 uses "descending" instead
-  */
- public void setReverse(Boolean reverse) {
-     this.reverse = reverse;
- }
-
- public void setDescending(Boolean descending) {
-     this.reverse = descending;
- }
- /**
-  * Skip listing these keys (not sure if this works, or the format)
-  * @param skip
-  */
- public void setSkip(String skip) {
-     this.skip = skip;
- }
- /**
-  * Start listing at this key
-  * @param startKey
-  */
- public void setStartKey(String startKey) {
-     this.startKey = startKey;
- }
- /**
-  * Not sure... might be for batch updates, but not sure.
-  * @param update
-  */
- public void setUpdate(Boolean update) {
-     this.update = update;
- }
-
- public void setWithDocs(Boolean withDocs) {
-     this.includeDocs = withDocs;
- }
  
  /**
   * The name for this view (w/o doc id)

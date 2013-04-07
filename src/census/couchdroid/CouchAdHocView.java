@@ -27,7 +27,7 @@ package census.couchdroid;
 */
 public class CouchAdHocView extends CouchView {
  public CouchAdHocView(String function) {
-     super("_temp_view");
+     super("_temp_view", null);
      this.function=function;
  }
 }

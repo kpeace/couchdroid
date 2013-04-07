@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 //import com.fourspaces.couchdb.util.JSONUtils;
 //import static com.fourspaces.couchdb.util.JSONUtils.urlEncodePath;
+import java.util.HashMap;
 
 //import org.apache.commons.logging.Log;
 //import org.apache.commons.logging.LogFactory;
@@ -119,7 +120,7 @@ public int getUpdateSeq() {
 * @return ViewResults - the results of the view... this can be iterated over to get each document.
 */
 public CouchViewResults getAllDocuments() {
- return view(new CouchView("_all_docs"), false);
+ return view(new CouchView("_all_docs", null), false);
 }
 
 /**
@@ -128,11 +129,14 @@ public CouchViewResults getAllDocuments() {
 * @return ViewResults - all design docs
 */     
 public CouchViewResults getAllDesignDocuments() {
-    CouchView v = new CouchView("_all_docs");
-   v.startKey = "%22_design%2F%22";
-   v.endKey = "%22_design0%22";
-   v.includeDocs = Boolean.TRUE;
-   return view(v, false);
+    HashMap<String, String> query_args = new HashMap<String, String>(); 
+    query_args.put(CouchView.QueryArguments.STARTKEY, "%22_design%2F%22");
+    query_args.put(CouchView.QueryArguments.ENDKEY, "%22_design0%22");
+    query_args.put(CouchView.QueryArguments.INCLUDEDOCS, "true");
+    
+    CouchView v = new CouchView("_all_docs", query_args);
+    
+    return view(v, false);
 }
 
 /**
@@ -141,8 +145,11 @@ public CouchViewResults getAllDesignDocuments() {
 * @return ViewResults - the results of the view... this can be iterated over to get each document.
 */
 public CouchViewResults getAllDocumentsWithCount(int count) {
-    CouchView v = new CouchView("_all_docs");
-    v.setCount(count);
+    HashMap<String, String> query_args = new HashMap<String, String>(); 
+    query_args.put(CouchView.QueryArguments.LIMIT, Integer.toString(count));
+    
+    CouchView v = new CouchView("_all_docs", query_args);
+    
     return view(v, false);
 }
 
@@ -152,7 +159,12 @@ public CouchViewResults getAllDocumentsWithCount(int count) {
 * @return ViewResults - the results of the view... this can be iterated over to get each document.
 */
 public CouchViewResults getAllDocuments(int revision) {
- return view(new CouchView("_all_docs_by_seq?startkey=" + revision), false);
+    HashMap<String, String> query_args = new HashMap<String, String>(); 
+    query_args.put(CouchView.QueryArguments.STARTKEY, Integer.toString(revision));
+    
+    CouchView v = new CouchView("_all_docs", query_args);
+    
+    return view(v, false);
 }
 
 /**
@@ -201,8 +213,8 @@ private CouchViewResults view(final CouchView view, final boolean isPermanentVie
 * @return
 */
 
-public CouchViewResults view(String fullname) {
- return view(new CouchView(fullname), true);
+public CouchViewResults view(String fullname, HashMap<String, String> query_args) {
+    return view(new CouchView(fullname, query_args), true);
 }
 
 /**

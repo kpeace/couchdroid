@@ -18,6 +18,8 @@ package census.couchdroid;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
@@ -254,8 +256,16 @@ public class CouchSession {
 		return ( (secure) ? "https" : "http") + "://"+host+":"+port+"/" + url;
 	}
 	
+	
+	
 	protected String buildUrl(String url, String queryString) {
-		return (queryString != null) ? buildUrl(url) + "?" + queryString : buildUrl(url);
+	    URI uri;
+	    try {
+            uri = new URI((secure ? "https" : "http"), "", host, port, "/" + url, (queryString != null ? queryString : ""), "");
+        } catch (URISyntaxException e) {
+            return null;
+        }
+		return uri.toString();
 	}
 	
 	protected String buildUrl(String url, NameValuePair[] params) {

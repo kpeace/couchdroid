@@ -84,11 +84,16 @@ public class CouchResponse {
 		
 		boolean isDelete = (req instanceof HttpDelete);
 		
+		/*DEBUG*/ android.util.Log.e("CouchResponse", "status code = " + Integer.toString(statusCode));
+		
+		// TODO error handling sucks! must fix it!
 		if (
-				(isGet && statusCode==404) || 
-				(isPut && statusCode==409) ||
-				(isPost && statusCode==404) ||
-				(isDelete && statusCode==404) 
+		        (statusCode == 400) ||
+				(statusCode == 404) ||
+				(statusCode == 405) ||
+				(statusCode == 409) ||
+				(statusCode == 412) ||
+				(statusCode == 500)
 			) {
 				JSONObject jbody = null;
 				try {
